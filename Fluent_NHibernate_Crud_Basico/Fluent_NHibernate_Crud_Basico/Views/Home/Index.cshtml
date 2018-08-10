@@ -9,6 +9,13 @@
 <p>
     @Html.ActionLink("Create New", "Create")
 </p>
+
+@if(ViewBag.Operacao != null)
+{
+    @Html.Raw(@ViewBag.Operacao);
+}
+
+<br />
 <table class="table">
     <tr>
         <th>

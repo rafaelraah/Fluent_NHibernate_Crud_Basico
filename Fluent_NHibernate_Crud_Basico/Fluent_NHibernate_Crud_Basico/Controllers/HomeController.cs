@@ -13,6 +13,8 @@ namespace Fluent_NHibernate_Crud_Basico.Controllers
         // GET: Home
         public ActionResult Index()
         {
+            VerificacaoParametros();
+
             using(ISession session = NHibernateHelper.OpenSession())
             {
                 var jogos = session.Query<Jogo>().ToList();
@@ -59,7 +61,11 @@ namespace Fluent_NHibernate_Crud_Basico.Controllers
         // GET: Home/Edit/5
         public ActionResult Edit(int id)
         {
-            return View();
+            using (ISession session = NHibernateHelper.OpenSession())
+            {
+                var jogo = session.Get<Jogo>(id);
+                return View(jogo);
+            }
         }
 
         // POST: Home/Edit/5
@@ -68,9 +74,19 @@ namespace Fluent_NHibernate_Crud_Basico.Controllers
         {
             try
             {
-                // TODO: Add update logic here
+                using(ISession session = NHibernateHelper.OpenSession()) {
+                    var jogoAlterado = session.Get<Jogo>(id);
+                    jogoAlterado.Nome = collection["nome"];
+                    jogoAlterado.Classificacao = Convert.ToInt16(collection["classificacao"]);
 
-                return RedirectToAction("Index");
+                    using (ITransaction transaction = session.BeginTransaction())
+                    {
+                        session.Save(jogoAlterado);
+                        transaction.Commit();
+                    }
+
+                    return RedirectToAction("Index", new {alterado = "ok"});
+                }
             }
             catch
             {
@@ -81,7 +97,11 @@ namespace Fluent_NHibernate_Crud_Basico.Controllers
         // GET: Home/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            using (ISession session = NHibernateHelper.OpenSession())
+            {
+                var jogo = session.Get<Jogo>(id);
+                return View(jogo);
+            }
         }
 
         // POST: Home/Delete/5
@@ -90,14 +110,35 @@ namespace Fluent_NHibernate_Crud_Basico.Controllers
         {
             try
             {
-                // TODO: Add delete logic here
+               
+                using(ISession session = NHibernateHelper.OpenSession())
+                {
+                    var jogoDeletar = session.Get<Jogo>(id);
+                    using(ITransaction transaction = session.BeginTransaction())
+                    {
+                        session.Delete(jogoDeletar);
+                        transaction.Commit();
+                    }
+                }
 
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", new { deletado = "ok"});
             }
             catch
             {
                 return View();
             }
         }
+        
+        //Apenas verificando a leitura da QueryString em Mvc
+        private void VerificacaoParametros()
+        {
+            if (Request.QueryString["alterado"] == "ok")
+                ViewBag.Operacao = "Jogo foi <b>ALTERADO</b> com sucesso!";
+
+            if (Request.QueryString["deletado"] == "ok")
+                ViewBag.Operacao = "Jogo foi <b>DELETADO</b> com sucesso!";
+        }
+
+
     }
 }
